@@ -1,8 +1,8 @@
-import dynamic from "next/dynamic";
-import React from "react";
-import { Input } from "@chakra-ui/react";
+import dynamic from 'next/dynamic';
+import React from 'react';
+import { Input } from '@chakra-ui/react';
 
-const DynamicMap = dynamic((data) => import("../components/Map"), {
+const DynamicMap = dynamic((data) => import('../components/Map'), {
   ssr: false,
 });
 const Dashboard = () => {
@@ -15,7 +15,7 @@ const Dashboard = () => {
             <div className="text-4xl text-white font-bold mb-5 text-center">
               Find a nearby station ⛽
             </div>
-            <Input w={"70%"} alignSelf="center" color="white" />
+            <Input w={'70%'} alignSelf="center" color="white" />
             {/* <input
                 className="self-center bg-gray-200 appearance-none border-2 border-gray-200 rounded w-[70%] py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#4caf50]"
                 id="inline-full-name"
@@ -39,9 +39,7 @@ const Dashboard = () => {
                     <div className="font-semibold text-lg">Station XXX</div>
                     <div className="text-sm text-gray-40">Price ...</div>
                   </div>
-                  <div className="ml-6 bg-[#4caf50] rounded-full p-6 py-1">
-                    activate
-                  </div>
+                  <div className="ml-6 bg-[#4caf50] rounded-full p-6 py-1">activate</div>
                 </div>
               </div>
               <div>
