@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import { OpenStreetMapProvider, GeoSearchControl } from 'leaflet-geosearch';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   MapContainer,
   Marker,
@@ -6,16 +7,40 @@ import {
   TileLayer,
   useMap,
   useMapEvents,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import { icon } from "leaflet";
-import { useAccount } from "wagmi";
-import Link from "next/link";
+  useLeaflet,
+} from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { icon } from 'leaflet';
+import { useAccount } from 'wagmi';
+import Link from 'next/link';
 
 const ICON = icon({
-  iconUrl: "/static/marker1.png",
+  iconUrl: '/static/marker1.png',
   iconSize: [42, 42],
 });
+
+const Search = (props) => {
+  const map = useMapEvents({
+    click() {
+      map.locate();
+    },
+    locationfound(e) {
+      map.flyTo(e.latlng, map.getZoom());
+    },
+  });
+  const { provider } = props;
+
+  useEffect(() => {
+    const searchControl = new GeoSearchControl({
+      provider,
+    });
+
+    map.addControl(searchControl); // this is how you add a control in vanilla leaflet
+    return () => map.removeControl(searchControl);
+  }, [props]);
+
+  return null; // don't want anything to show up from this comp
+};
 
 function LocationMarker() {
   const [position, setPosition] = useState(null);
@@ -30,7 +55,7 @@ function LocationMarker() {
   });
 
   useEffect(() => {
-    map.locate().on("locationfound", function (e) {
+    map.locate().on('locationfound', function (e) {
       setPosition(e.latlng);
       map.flyTo(e.latlng, map.getZoom());
     });
@@ -47,17 +72,15 @@ function LocationMarker() {
 
 const Map = () => {
   const { address, isConnecting, isDisconnected } = useAccount();
-  const [account, setAccount] = useState("");
+  const [account, setAccount] = useState('');
 
   useEffect(() => {
     setAccount(address);
-    // console.log(latitude, longitude);
-    // console.log(data);
     // mapToUserLocation.flyTo();
   }, [account]);
   return (
     <MapContainer
-      style={{ height: "85vh", width: "100%" }}
+      style={{ height: '85vh', width: '100%' }}
       center={[51.505, -0.09]}
       zoom={13}
       scrollWheelZoom={true}
@@ -78,9 +101,8 @@ const Map = () => {
               <div className="no-margin">Station XXX</div>
               <p className="no-margin">Station details</p>
               <p className="no-margin text-justify">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                Corrupti eligendi vel delectus ullam cupiditate necessitatibus
-                est nam magnam numquam quae.
+                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Corrupti eligendi vel
+                delectus ullam cupiditate necessitatibus est nam magnam numquam quae.
               </p>
               {address ? (
                 <Link href="/book/123">
@@ -95,6 +117,7 @@ const Map = () => {
           </div>
         </Popup>
       </Marker>
+      <Search provider={new OpenStreetMapProvider()} />
     </MapContainer>
   );
 };

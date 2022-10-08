@@ -5,6 +5,7 @@ import { Input } from '@chakra-ui/react';
 const DynamicMap = dynamic((data) => import('../components/Map'), {
   ssr: false,
 });
+
 const Dashboard = () => {
   return (
     <div className="pb-5">

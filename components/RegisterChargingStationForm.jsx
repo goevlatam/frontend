@@ -1,26 +1,26 @@
-import { ethers } from "ethers";
-import React, { useEffect, useRef, useState } from "react";
-import ReCAPTCHA from "react-google-recaptcha";
-import ChargingStationRegisterPopUpModel from "./ChargingStationRegisterPopUpModel";
+import { ethers } from 'ethers';
+import React, { useEffect, useRef, useState } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
+import ChargingStationRegisterPopUpModel from './ChargingStationRegisterPopUpModel';
 const RegisterChargingStationForm = () => {
   const interval = 400;
   let typingTimer;
   const [isSubmit, setIsSubmit] = useState(false);
 
-  const [stationName, setStationName] = useState("");
+  const [stationName, setStationName] = useState('');
   const [longitude, setLongitude] = useState(0);
   const [latitude, setLatitude] = useState(0);
-  const [stationWallet, setStationWallet] = useState("");
+  const [stationWallet, setStationWallet] = useState('');
   const [numberOfConnectors, setNumberOfConnectors] = useState(1);
   const [chargeRate, setChargeRate] = useState(0);
-  const [currencySelected, setCurrencySelected] = useState("jev");
+  const [currencySelected, setCurrencySelected] = useState('jev');
   const [stakeAmountFetched, setStakeAmountFetched] = useState(0);
   const [isStationNameValid, setIsStationNameValid] = useState(true);
   const [isLongitudeValid, setIsLongitudeValid] = useState(true);
   const [isLatitudeValid, setIsLatitudeValid] = useState(true);
   const [isStationWalletValid, setIsStationWalletValid] = useState(true);
 
-  const [recaptchaToken, setRecaptchaToken] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState('');
   const captchaRef = useRef(null);
 
   // the function handling the click event of the submit
@@ -47,15 +47,10 @@ const RegisterChargingStationForm = () => {
     } else {
       setIsStationWalletValid(true);
     }
-    if (
-      isStationNameValid &&
-      isLongitudeValid &&
-      isLatitudeValid &&
-      isStationWalletValid
-    ) {
+    if (isStationNameValid && isLongitudeValid && isLatitudeValid && isStationWalletValid) {
       setIsSubmit(true);
       captchaRef.current.reset();
-      setRecaptchaToken("");
+      setRecaptchaToken('');
     }
   };
 
@@ -64,7 +59,7 @@ const RegisterChargingStationForm = () => {
     typingTimer = setTimeout(() => {
       // request needed stake amount
       // setStakeAmountFetched()
-      if (currencySelected == "jev") {
+      if (currencySelected == 'jev') {
       } else {
       }
       // setStakeAmountFetched()
@@ -73,9 +68,7 @@ const RegisterChargingStationForm = () => {
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <h3 className="text-center text-3xl text-white font-bold mb-8 ">
-        Register Charging Station
-      </h3>
+      <h3 className="text-center text-3xl text-white font-bold mb-8 ">Register Charging Station</h3>
       <form className="w-full max-w-sm ">
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">
@@ -97,9 +90,7 @@ const RegisterChargingStationForm = () => {
             />
           </div>
           {!isStationNameValid && (
-            <div className="text-red-400">
-              Station name should not contain symbols!
-            </div>
+            <div className="text-red-400">Station name should not contain symbols!</div>
           )}
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
@@ -121,9 +112,7 @@ const RegisterChargingStationForm = () => {
               onChange={(e) => setLongitude(e.target.value)}
             />
           </div>
-          {!isLongitudeValid && (
-            <div className="text-red-400">-180 to 180 for longitude!</div>
-          )}
+          {!isLongitudeValid && <div className="text-red-400">-180 to 180 for longitude!</div>}
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">
@@ -144,9 +133,7 @@ const RegisterChargingStationForm = () => {
               onChange={(e) => setLatitude(e.target.value)}
             />
           </div>
-          {!isLatitudeValid && (
-            <div className="text-red-400">-90 to 90 for latitude!</div>
-          )}
+          {!isLatitudeValid && <div className="text-red-400">-90 to 90 for latitude!</div>}
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">
@@ -169,9 +156,7 @@ const RegisterChargingStationForm = () => {
               }}
             />
           </div>
-          {!isStationWalletValid && (
-            <div className="text-red-400">Invalid address</div>
-          )}
+          {!isStationWalletValid && <div className="text-red-400">Invalid address</div>}
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">

@@ -1,27 +1,29 @@
-import Head from "next/head";
-import React, { useState } from "react";
+import Head from 'next/head';
+import React, { useState } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const dummyData = [
   {
     id: 1,
-    spec: "100w",
-    rate: "99%",
+    spec: '100w',
+    rate: '99%',
   },
   {
     id: 2,
-    spec: "77w",
-    rate: "98%",
+    spec: '77w',
+    rate: '98%',
   },
   {
     id: 3,
-    spec: "66w",
-    rate: "97%",
+    spec: '66w',
+    rate: '97%',
   },
 ];
 
 const Booking = () => {
   const [selectedCharge, setSelectedCharger] = useState();
-  const [selectedBookingTime, setSelectedBookingTime] = useState();
+  const [selectedBookingTime, setSelectedBookingTime] = useState(new Date());
   return (
     <div className="mt-10 pb-10 w-full flex justify-center">
       <Head>
@@ -43,11 +45,7 @@ const Booking = () => {
               </div>
             </div>
             <div className="ml-3 mt-5 flex items-center">
-              <img
-                src="/static/locationCharger.png"
-                alt=""
-                className="w-[40px]"
-              />
+              <img src="/static/locationCharger.png" alt="" className="w-[40px]" />
               <div className="ml-2">
                 <div className="font-semibold text-xl">Location</div>
                 <p className="text-gray-300">Address</p>
@@ -60,7 +58,7 @@ const Booking = () => {
                 <p className="text-gray-300">
                   {selectedCharge
                     ? selectedCharge.spec
-                    : "Select a charger, here will show the spec"}
+                    : 'Select a charger, here will show the spec'}
                 </p>
               </div>
             </div>
@@ -69,10 +67,10 @@ const Booking = () => {
               <div className="ml-2">
                 <div className="font-semibold text-xl">Charger Rate</div>
                 <p className="text-gray-300">
-                  {" "}
+                  {' '}
                   {selectedCharge
                     ? selectedCharge.rate
-                    : "Select a charger, here will show the rate"}
+                    : 'Select a charger, here will show the rate'}
                 </p>
               </div>
             </div>
@@ -115,12 +113,11 @@ const Booking = () => {
           <div className="flex flex-col md:flex-row items-center">
             <h3 className="font-bold text-2xl">Available Slot</h3>
             <div className="text-lg text-gray-400 ml-5">select book time</div>
-            <input
-              onChange={(e) => setSelectedBookingTime(e.timeStamp)}
-              type="datetime-local"
-              name=""
-              id=""
+            <DatePicker
               className="text-black ml-2 form-control border border-[#479C4C] block px-3 py-1.5 text-base font-normal bg-white bg-clip-padding border border-solid border-[#4caf50] rounded transition ease-in-out m-0 focus:outline-none"
+              selected={selectedBookingTime}
+              onChange={(date) => setSelectedBookingTime(date)}
+              value={selectedBookingTime}
             />
           </div>
           <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-x-6 gap-y-6">
@@ -130,9 +127,7 @@ const Booking = () => {
                   key={item.id}
                   onClick={() => setSelectedCharger(item)}
                   className={`hover:cursor-pointer flex justify-between items-center bg-[#1D1D1D] py-2 px-3 rounded-lg ${
-                    selectedCharge?.id == item.id
-                      ? "border border-[#4caf50]"
-                      : ""
+                    selectedCharge?.id == item.id ? 'border border-[#4caf50]' : ''
                   }`}
                 >
                   <img src="/static/charger.png" alt="" className="w-[40px]" />
