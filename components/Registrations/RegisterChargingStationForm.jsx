@@ -7,7 +7,7 @@ import ImageUploader from "../ImgUploader";
 import useFetchChargePoint from "../../services/jom/useFetchChargePoint";
 import { getContractAddress, getScanUrlPrefix, getTokenBySymbol } from "../../contracts/constants";
 import { useNetwork, usePrepareContractWrite, useContractWrite } from "wagmi";
-import JomAbis from "../../contracts/abis";
+import JomAbis from "../../contracts/abis/index.json";
 import { useSigner } from "wagmi";
 import useStakeChargePoint from "../../services/jom/useStakeChargePoint";
 

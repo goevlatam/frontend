@@ -14,7 +14,7 @@ import useFetchChargePointAvailability from "../services/jom/useFetchChargePoint
 
 import { useContractRead, useNetwork } from "wagmi";
 import { getContractAddress, getScanUrlPrefix } from "../contracts/constants";
-import JomAbi from "../contracts/abis";
+import JomAbi from "../contracts/abis/index.json";
 import { useEnsName } from "wagmi";
 
 // fetch charge points availability
