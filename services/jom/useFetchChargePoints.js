@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { useQuery, gql } from "@apollo/client";
 
-const GET_CHARGE_POINT = gql`
-  query GetChargePoint($clientId: String!) {
-    chargePoint(clientId: $clientId) {
+const GET_USER_CHARGE_POINTS = gql`
+  query GetUserChargePoints($tokenAddress: String!) {
+    userChargePoints(tokenAddress: $tokenAddress) {
       id
       clientId
       tokenAddress
@@ -32,18 +32,19 @@ const GET_CHARGE_POINT = gql`
     }
   }
 `;
-const useChargePoint = (clientId) => {
-  const { loading, error, data, refetch } = useQuery(GET_CHARGE_POINT, {
+const useUserChargePoints = (tokenAddress) => {
+  const { loading, error, data, refetch } = useQuery(GET_USER_CHARGE_POINTS, {
     variables: {
-      clientId: clientId,
+      tokenAddress: tokenAddress,
     },
     context: {
       clientName: "endpoint1",
     },
   });
+  // console.log(data);
 
-  const formattedData = useMemo(() => data?.chargePoint, [data]);
-  return { loading, error, data: formattedData, refetch };
+  // const formattedData = useMemo(() => data?.chargePoint, [data]);
+  return { loading, error, data, refetch };
 };
 
-export default useChargePoint;
+export default useUserChargePoints;

@@ -50,12 +50,12 @@ function LocationMarker() {
 const Map = ({ data }) => {
   const { address, isConnecting, isDisconnected } = useAccount();
 
-  useEffect(() => {
-    console.log(data);
-    // console.log(latitude, longitude);
-    // console.log(data);
-    // mapToUserLocation.flyTo();
-  }, []);
+  // useEffect(() => {
+  //   // console.log(data);
+  //   // console.log(latitude, longitude);
+  //   // console.log(data);
+  //   // mapToUserLocation.flyTo();
+  // }, [data]);
   return (
     <MapContainer
       style={{ height: "85vh", width: "100%" }}
@@ -70,42 +70,48 @@ const Map = ({ data }) => {
       <LocationMarker />
       {/* here will be a loop to render all charging station, now only a demo */}
       {data.map((item) => {
-        <Marker
-          icon={ICON}
-          position={[
-            item.location.coordinates[0],
-            item.location.coordinates[1],
-          ]}
-        >
-          <Popup>
-            <div className="flex">
-              <div>
-                <img src="/static/location.png" alt="" className="w-[60px]" />
-              </div>
-              <div className="flex flex-col ml-3 text-white justify-center">
-                <div className="no-margin">{item.name}</div>
-                <p className="no-margin text-justify">{item.physicalAddress}</p>
-                {address ? (
-                  <Link href={`/book/${item.clientId}`}>
-                    <div className="font-bold cursor-pointer mt-3 w-fit px-4 py-1 rounded bg-[#4caf50]">
-                      Book
-                    </div>
-                  </Link>
-                ) : (
-                  <></>
-                )}
-                {/* <Link href="/book/1">
+        // console.log("this is a market" + item);
+        return (
+          <Marker
+            key={item.clientId}
+            icon={ICON}
+            position={[
+              item.location.coordinates[1],
+              item.location.coordinates[0],
+            ]}
+          >
+            <Popup>
+              <div className="flex">
+                <div>
+                  <img src="/static/location.png" alt="" className="w-[60px]" />
+                </div>
+                <div className="flex flex-col ml-3 text-white justify-center">
+                  <div className="no-margin">{item.name}</div>
+                  <p className="no-margin text-justify">
+                    {item.physicalAddress}
+                  </p>
+                  {address ? (
+                    <Link href={`/book/${item.clientId}`}>
+                      <div className="font-bold cursor-pointer mt-3 w-fit px-4 py-1 rounded bg-[#4caf50]">
+                        Book
+                      </div>
+                    </Link>
+                  ) : (
+                    <></>
+                  )}
+                  {/* <Link href="/book/1">
                   <IconButton
                     colorScheme="orange"
                     aria-label="Book the charging connector"
                     icon={<Icon as={BsCartCheck} />}
                   />
                 </Link> */}
+                </div>
               </div>
-            </div>
-          </Popup>
-          ;
-        </Marker>;
+            </Popup>
+            ;
+          </Marker>
+        );
       })}
     </MapContainer>
   );

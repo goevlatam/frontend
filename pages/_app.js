@@ -15,6 +15,8 @@ import {
   InMemoryCache,
   ApolloProvider,
   gql,
+  HttpLink,
+  ApolloLink,
 } from "@apollo/client";
 
 const { chains, provider } = configureChains(
@@ -33,8 +35,27 @@ const wagmiClient = createClient({
   provider,
 });
 
-const client = new ApolloClient({
+//Declare your endpoints
+const endpoint1 = new HttpLink({
   uri: "https://jomev-backend.frp.wmtech.cc/graphql",
+});
+
+const endpoint2 = new HttpLink({
+  uri: "https://api.thegraph.com/subgraphs/name/jrcarlos2000/miamipolygon",
+});
+
+// const client = new ApolloClient({
+//   uri: "https://jomev-backend.frp.wmtech.cc/graphql",
+//   cache: new InMemoryCache(),
+// });
+
+//pass them to apollo-client config
+const client = new ApolloClient({
+  link: ApolloLink.split(
+    (operation) => operation.getContext().clientName === "endpoint2",
+    endpoint2, //if above
+    endpoint1
+  ),
   cache: new InMemoryCache(),
 });
 

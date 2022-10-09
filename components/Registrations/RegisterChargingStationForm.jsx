@@ -5,10 +5,11 @@ import ReCAPTCHA from "react-google-recaptcha";
 import ChargingStationRegisterPopUpModel from "./ChargingStationRegisterPopUpModel";
 import ImageUploader from "../ImgUploader";
 import useFetchChargePoint from "../../services/jom/useFetchChargePoint";
-import { getContractAddress, getScanUrlPrefix } from "../../contracts/constants";
+import { getContractAddress, getScanUrlPrefix, getTokenBySymbol } from "../../contracts/constants";
 import { useNetwork, usePrepareContractWrite, useContractWrite } from "wagmi";
 import JomAbis from "../../contracts/abis";
 import { useSigner } from "wagmi";
+import useStakeChargePoint from "../../services/jom/useStakeChargePoint";
 
 // data structure for form submission
 // {
@@ -80,6 +81,7 @@ const RegisterChargingStationForm = ({ setStage }) => {
 
   const [chargingPointId, setChargingPointId] = useState("")
   const [stationName, setStationName] = useState("");
+  const [stationAddress, setStationAddress] = useState("");
   const [longitude, setLongitude] = useState();
   const [latitude, setLatitude] = useState();
   const [stationWallet, setStationWallet] = useState("");
@@ -88,9 +90,9 @@ const RegisterChargingStationForm = ({ setStage }) => {
   const [currencySelected, setCurrencySelected] = useState("jev");
   const stakeAmount = useMemo(() => {
     if (chargeRate && numberOfConnectors)
-      return (chargeRate*24*7*numberOfConnectors).toFixed(3)
+      return (chargeRate * 24 * 7 * numberOfConnectors).toFixed(3)
     return 0
-}, [chargeRate, numberOfConnectors])
+  }, [chargeRate, numberOfConnectors])
   // TODO: check if the station is connected to our server
   const { data: chargePoint } = useFetchChargePoint(chargingPointId);
   const isChargingPointConnected = useMemo(() => chargePoint?.isOnline, [chargePoint]);
@@ -103,6 +105,8 @@ const RegisterChargingStationForm = ({ setStage }) => {
   const [recaptchaToken, setRecaptchaToken] = useState("");
   const captchaRef = useRef(null);
 
+  // mutation handling
+  const { mutate: updateJomServerChargePoint } = useStakeChargePoint()
   // contract handling
   const toast = useToast();
   const { chain } = useNetwork();
@@ -159,22 +163,43 @@ const RegisterChargingStationForm = ({ setStage }) => {
     }
 
     try {
-      // TODO: call smart contract
-      // addChargingPointToContract();
-      const receipt = await addChargingPointToChain(
-        // TODO: solidity need to change, need to add chargingPointId as 1st param
-        chargeRate, "https://cdn.corporate.walmart.com/dims4/WMT/dcd5723/2147483647/strip/true/crop/1656x1080+107+0/resize/920x600!/quality/90/?url=https%3A%2F%2Fcdn.corporate.walmart.com%2Fb0%2F63%2F54aa9b6f471e8821f2812daa4fb5%2Fevpstation-banner.jpg", "0x481aBBd22B64709Efc41f0aCA3734A1a9f05b1A9", 1
-      )
-      console.log('tx receipt: ', receipt)
-      toast({
-        title: `Transaction Submitted`,
-        position: 'top-right',
-        isClosable: true,
-        description: <Text>Check your transaction <Link target='_blank' href={`${getScanUrlPrefix(chainId)}/tx/${receipt.transactionHash}`}>here</Link>.</Text>,
-        status: 'success',
-        duration: 5000
-      })
+      const payTokenAddress = getTokenBySymbol(chainId, 'USDT').address
+      // // call smart contract
+      // const receipt = await addChargingPointToChain(
+      //   // TODO: solidity need to change, need to add chargingPointId as 1st param
+      //   chargeRate, "https://cdn.corporate.walmart.com/dims4/WMT/dcd5723/2147483647/strip/true/crop/1656x1080+107+0/resize/920x600!/quality/90/?url=https%3A%2F%2Fcdn.corporate.walmart.com%2Fb0%2F63%2F54aa9b6f471e8821f2812daa4fb5%2Fevpstation-banner.jpg", payTokenAddress, 1
+      // )
+      // console.log('tx receipt: ', receipt)
+      // toast({
+      //   title: `Transaction Submitted`,
+      //   position: 'top-right',
+      //   isClosable: true,
+      //   description: <Text>Check your transaction <Link target='_blank' href={`${getScanUrlPrefix(chainId)}/tx/${receipt.transactionHash}`}>here</Link>.</Text>,
+      //   status: 'success',
+      //   duration: 5000
+      // })
+
       // TODO: write to Jom server
+      await updateJomServerChargePoint({
+        variables: {
+          chargePointId: chargePoint.id,
+          input: {
+            tokenAddress: payTokenAddress,
+            physicalAddress: stationAddress,
+            location: { type: "Point", coordinates: [longitude, latitude] },
+            name: stationName,
+            provider: stationName + ' Inc.',
+            chargingRate: chargeRate,
+            amountStaked: stakeAmount,
+            stakingTxnHash: "0x123",  // TODO: replace with receipt.transactionHash
+            images: []
+          }
+        },
+        context: {
+          clientName: "endpoint1",
+        }
+      })
+      console.log('updated database')
 
     } catch (e) {
       console.warn(e)
@@ -220,6 +245,23 @@ const RegisterChargingStationForm = ({ setStage }) => {
           )
             : null
           }
+        </div>
+        <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
+          <div className="w-full">
+            <Input
+              color={"white"}
+              id="inline-full-name"
+              type="text"
+              placeholder="Address"
+              value={stationAddress}
+              onChange={(e) => setStationAddress(e.target.value)}
+            />
+          </div>
+          {/* {!isStationNameValid && (
+            <div className="text-red-400">
+              Station name should not contain symbols!
+            </div>
+          )} */}
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">
