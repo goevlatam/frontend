@@ -1,3 +1,4 @@
+/* eslint-disable react/no-children-prop */
 import Head from "next/head";
 import React, { useEffect, useMemo, useState } from "react";
 import {
