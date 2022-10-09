@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-key */
 import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 import { Input, Link } from "@chakra-ui/react";
