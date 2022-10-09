@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import useChargePoint from "../services/jom/useFetchChargePoint";
 import truncateEthAddress from "truncate-eth-address";
-import useFetchChargePointAvailability from "../services/jom/useFetchChargePointAvailability";
+// import useFetchChargePointAvailability from "../services/jom/useFetchChargePointAvailability";
 
 import { useContractRead, useNetwork } from "wagmi";
 import { getContractAddress, getScanUrlPrefix } from "../contracts/constants";
@@ -67,7 +67,7 @@ const Booking = ({ bookId }) => {
   const { chain } = useNetwork();
   const { data: chargePoint } = useChargePoint(bookId);
   console.log("test charge point data: ", chargePoint);
-  const { data: chargePointAvailability } = useFetchChargePointAvailability();
+  // const { data: chargePointAvailability } = useFetchChargePointAvailability();
 
   const t = useChargePoints();
 
