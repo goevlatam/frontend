@@ -11,6 +11,8 @@ import "leaflet/dist/leaflet.css";
 import { icon } from "leaflet";
 import { useAccount } from "wagmi";
 import Link from "next/link";
+import { IconButton, Icon } from "@chakra-ui/react";
+import { BsCartCheck } from "react-icons/bs";
 
 const ICON = icon({
   iconUrl: "/static/marker1.png",
@@ -45,16 +47,15 @@ function LocationMarker() {
   );
 }
 
-const Map = () => {
+const Map = ({ data }) => {
   const { address, isConnecting, isDisconnected } = useAccount();
-  const [account, setAccount] = useState("");
 
   useEffect(() => {
-    setAccount(address);
+    console.log(data);
     // console.log(latitude, longitude);
     // console.log(data);
     // mapToUserLocation.flyTo();
-  }, [account]);
+  }, []);
   return (
     <MapContainer
       style={{ height: "85vh", width: "100%" }}
@@ -68,33 +69,44 @@ const Map = () => {
       />
       <LocationMarker />
       {/* here will be a loop to render all charging station, now only a demo */}
-      <Marker icon={ICON} position={[51.505, -0.09]}>
-        <Popup>
-          <div className="flex">
-            <div>
-              <img src="/static/location.png" alt="" className="w-[60px]" />
+      {data.map((item) => {
+        <Marker
+          icon={ICON}
+          position={[
+            item.location.coordinates[0],
+            item.location.coordinates[1],
+          ]}
+        >
+          <Popup>
+            <div className="flex">
+              <div>
+                <img src="/static/location.png" alt="" className="w-[60px]" />
+              </div>
+              <div className="flex flex-col ml-3 text-white justify-center">
+                <div className="no-margin">{item.name}</div>
+                <p className="no-margin text-justify">{item.physicalAddress}</p>
+                {address ? (
+                  <Link href={`/book/${item.clientId}`}>
+                    <div className="font-bold cursor-pointer mt-3 w-fit px-4 py-1 rounded bg-[#4caf50]">
+                      Book
+                    </div>
+                  </Link>
+                ) : (
+                  <></>
+                )}
+                {/* <Link href="/book/1">
+                  <IconButton
+                    colorScheme="orange"
+                    aria-label="Book the charging connector"
+                    icon={<Icon as={BsCartCheck} />}
+                  />
+                </Link> */}
+              </div>
             </div>
-            <div className="ml-3 text-white">
-              <div className="no-margin">Station XXX</div>
-              <p className="no-margin">Station details</p>
-              <p className="no-margin text-justify">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                Corrupti eligendi vel delectus ullam cupiditate necessitatibus
-                est nam magnam numquam quae.
-              </p>
-              {address ? (
-                <Link href="/book/123">
-                  <div className="font-bold cursor-pointer mt-3 w-fit px-4 py-1 rounded bg-[#4caf50]">
-                    Book
-                  </div>
-                </Link>
-              ) : (
-                <></>
-              )}
-            </div>
-          </div>
-        </Popup>
-      </Marker>
+          </Popup>
+          ;
+        </Marker>;
+      })}
     </MapContainer>
   );
 };

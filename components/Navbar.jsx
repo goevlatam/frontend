@@ -27,7 +27,7 @@ const Navbar = () => {
           </a>
         </div>
         <div className="text-xs md:text-base">
-          <ConnectButton />
+          <ConnectButton showBalance={false} />
         </div>
       </div>
       <div className="mt-5 flex items-center justify-center block md:hidden text-white flex font-semibold text-xl">

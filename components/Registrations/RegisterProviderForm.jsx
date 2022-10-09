@@ -93,7 +93,7 @@ const RegisterForm = () => {
         </div>
         <div className="flex items-center justify-center mt-5 flex-col md:items-center md:justify-center">
           <div className="mb-5">
-            <ReCAPTCHA
+            {/* <ReCAPTCHA
               id="recaptcha"
               ref={captchaRef}
               onChange={(e) => {
@@ -105,7 +105,7 @@ const RegisterForm = () => {
               size="normal"
               className="g-recaptcha"
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-            />
+            /> */}
           </div>
           <div className="w-[75%]">
             <button

@@ -1,21 +1,94 @@
 import dynamic from "next/dynamic";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@chakra-ui/react";
+import { useQuery, gql, useLazyQuery } from "@apollo/client";
 
 const DynamicMap = dynamic((data) => import("../components/Map"), {
   ssr: false,
 });
+
+const GET_CHARGE_POINT_NEARBY = gql`
+  query GetChargePointsNearby(
+    $location: NewLocation!
+    $page: Int!
+    $skip: Int!
+    $maxDistance: Float!
+  ) {
+    chargePointsNearby(
+      location: $location
+      page: $page
+      skip: $skip
+      maxDistance: $maxDistance
+    ) {
+      name
+      physicalAddress
+      clientId
+      location {
+        coordinates
+      }
+    }
+  }
+`;
+
 const Dashboard = () => {
+  const [distance, setDistance] = useState("");
+  const [chargePointsNearby, setChargePointsNearby] = useState([]);
+  const [getNearbyCharingPoints, { loading, error, data }] = useLazyQuery(
+    GET_CHARGE_POINT_NEARBY
+  );
+
+  useEffect(() => {
+    findNearbyCharger();
+  }, []);
+
+  const findNearbyCharger = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((location) => {
+        getNearbyCharingPoints({
+          variables: {
+            location: {
+              type: "Point",
+              coordinates: [
+                location.coords.longitude,
+                location.coords.latitude,
+              ],
+            },
+            page: 0,
+            skip: 0,
+            maxDistance: distance >= 0 ? distance : 1000,
+          },
+        });
+      });
+      console.log(data);
+      // setChargePointsNearby(data?.chargePointsNearby);
+      setChargePointsNearby(data ? data.chargePointsNearby : []);
+    }
+  };
   return (
     <div className="pb-5">
       <div className="flex flex-col items-center justify-center relative">
         <div className="flex w-[85%] rounded-lg overflow-hidden justify-center">
-          <DynamicMap />
+          <DynamicMap data={chargePointsNearby} />
           <div className="flex flex-col mt-3 bg-[#1D1D1D] p-5 absolute rounded-3xl justify-center m-auto flex z-[1000] w-[65%] -bottom-[3rem]">
             <div className="text-4xl text-white font-bold mb-5 text-center">
               Find a nearby station ⛽
             </div>
-            <Input w={"70%"} alignSelf="center" color="white" />
+            <div className="flex justify-center items-center">
+              <Input
+                value={distance}
+                onChange={(e) => setDistance(e.target.value)}
+                placeholder="Enter a desire distance you hope to see your nearby chargers (meter as unit)"
+                w={"70%"}
+                alignSelf="center"
+                color="white"
+              />
+              <div
+                onClick={() => findNearbyCharger()}
+                className="text-white text-lg bg-[#4caf50] px-5 py-1 ml-2 rounded-lg cursor-pointer font-bold hover:opacity-90 transition"
+              >
+                Find
+              </div>
+            </div>
             {/* <input
                 className="self-center bg-gray-200 appearance-none border-2 border-gray-200 rounded w-[70%] py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#4caf50]"
                 id="inline-full-name"

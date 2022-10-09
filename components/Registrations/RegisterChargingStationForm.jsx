@@ -1,20 +1,100 @@
 import { ethers } from "ethers";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Input, Button, useToast, Text, Link } from "@chakra-ui/react";
 import ReCAPTCHA from "react-google-recaptcha";
 import ChargingStationRegisterPopUpModel from "./ChargingStationRegisterPopUpModel";
-const RegisterChargingStationForm = () => {
+import ImageUploader from "../ImgUploader";
+import useFetchChargePoint from "../../services/jom/useFetchChargePoint";
+import { getContractAddress, getScanUrlPrefix } from "../../contracts/constants";
+import { useNetwork, usePrepareContractWrite, useContractWrite } from "wagmi";
+import JomAbis from "../../contracts/abis";
+import { useSigner } from "wagmi";
+
+// data structure for form submission
+// {
+//   tokenAddress: String!
+//     physicalAddress: String!
+//     location: NewLocation!
+//     name: String!
+//     provider: String!
+//     chargingRate: Float!
+//     amountStaked: Float!
+//     stakingTxnHash: String!
+//     images: [String!]!
+// }
+
+// tokenAddress: String!
+// physicalAddress: String!
+// location: NewLocation!
+// name: String!
+// provider: String!
+// chargingRate: Float!
+// amountStaked: Float!
+// stakingTxnHash: String!
+// images: [String!]!
+
+// function addChargingPoint(
+//   string calldata chargingPointID,
+//   uint256 _pricePerHour,
+//   string calldata cid,
+//   address tokenAddr,
+//   uint256 nConnectors
+// )
+
+// const useAddChargingPointToChain = async (...args) => {
+//   const { chain } = useNetwork();
+//   console.log('test contract: ', chain?.id)
+//   // const { config: addChargingPoint } = usePrepareContractWrite({
+//   //   addressOrName: getContractAddress(chain?.id),
+//   //   contractInterface: JomAbis,
+//   //   functionName: 'addChargingPoint',
+//   //   args
+//   // })
+//   // const { data, isLoading, isSuccess, write } = useContractWrite(addChargingPoint)
+//   const { data, isLoading, isSuccess, write } = useContractWrite({
+//     addressOrName: getContractAddress(chain?.id),
+//     contractInterface: JomAbis,
+//     functionName: 'addChargingPoint',
+//     args
+//   })
+//   useEffect(() =>{
+//     console.log('test write: ',  write, args)
+//     // write()
+//   }
+//     , [write, args])
+
+//   useEffect(() => {
+//     if (data)
+//       console.log('transaction data: ', data)
+//   }, [data])
+
+//   return { write }
+// }
+
+
+
+const RegisterChargingStationForm = ({ setStage }) => {
   const interval = 400;
   let typingTimer;
   const [isSubmit, setIsSubmit] = useState(false);
 
+  const [chargingPointId, setChargingPointId] = useState("")
   const [stationName, setStationName] = useState("");
-  const [longitude, setLongitude] = useState(0);
-  const [latitude, setLatitude] = useState(0);
+  const [longitude, setLongitude] = useState();
+  const [latitude, setLatitude] = useState();
   const [stationWallet, setStationWallet] = useState("");
-  const [numberOfConnectors, setNumberOfConnectors] = useState(1);
-  const [chargeRate, setChargeRate] = useState(0);
+  const [numberOfConnectors, setNumberOfConnectors] = useState();
+  const [chargeRate, setChargeRate] = useState();
   const [currencySelected, setCurrencySelected] = useState("jev");
-  const [stakeAmountFetched, setStakeAmountFetched] = useState(0);
+  const stakeAmount = useMemo(() => {
+    if (chargeRate && numberOfConnectors)
+      return (chargeRate*24*7*numberOfConnectors).toFixed(3)
+    return 0
+}, [chargeRate, numberOfConnectors])
+  // TODO: check if the station is connected to our server
+  const { data: chargePoint } = useFetchChargePoint(chargingPointId);
+  const isChargingPointConnected = useMemo(() => chargePoint?.isOnline, [chargePoint]);
+
   const [isStationNameValid, setIsStationNameValid] = useState(true);
   const [isLongitudeValid, setIsLongitudeValid] = useState(true);
   const [isLatitudeValid, setIsLatitudeValid] = useState(true);
@@ -23,9 +103,28 @@ const RegisterChargingStationForm = () => {
   const [recaptchaToken, setRecaptchaToken] = useState("");
   const captchaRef = useRef(null);
 
+  // contract handling
+  const toast = useToast();
+  const { chain } = useNetwork();
+  const chainId = useMemo(() => chain?.id, [chain]);
+  const { data: signer } = useSigner();
+
+  const addChargingPointToChain = async (pricePerHour, cid, tokenAddr, nConnectors) => {
+    const contract = new ethers.Contract(
+      getContractAddress(chainId),
+      JomAbis,
+      signer
+    )
+
+    pricePerHour = ethers.utils.parseUnits(pricePerHour, 18);
+    const tx = await contract.addChargingPoint(pricePerHour, cid, tokenAddr, nConnectors)
+    const receipt = await tx.wait();
+    return receipt
+  }
+
   // the function handling the click event of the submit
   // button under the recaptcha
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const stationNameReg = /^[0-9a-zA-Z\s]+$/;
     if (!stationNameReg.test(stationName)) {
       setIsStationNameValid(false);
@@ -48,15 +147,40 @@ const RegisterChargingStationForm = () => {
       setIsStationWalletValid(true);
     }
     if (
-      isStationNameValid &&
-      isLongitudeValid &&
-      isLatitudeValid &&
-      isStationWalletValid
+      stationNameReg.test(stationName) &&
+      (longitude >= -180 || longitude <= 180) &&
+      (latitude >= -90 || latitude <= 90) &&
+      ethers.utils.isAddress(stationWallet)
     ) {
-      setIsSubmit(true);
-      captchaRef.current.reset();
+      console.log("invoked");
+      // setIsSubmit(true);
+      // captchaRef.current.reset();
       setRecaptchaToken("");
     }
+
+    try {
+      // TODO: call smart contract
+      // addChargingPointToContract();
+      const receipt = await addChargingPointToChain(
+        // TODO: solidity need to change, need to add chargingPointId as 1st param
+        chargeRate, "https://cdn.corporate.walmart.com/dims4/WMT/dcd5723/2147483647/strip/true/crop/1656x1080+107+0/resize/920x600!/quality/90/?url=https%3A%2F%2Fcdn.corporate.walmart.com%2Fb0%2F63%2F54aa9b6f471e8821f2812daa4fb5%2Fevpstation-banner.jpg", "0x481aBBd22B64709Efc41f0aCA3734A1a9f05b1A9", 1
+      )
+      console.log('tx receipt: ', receipt)
+      toast({
+        title: `Transaction Submitted`,
+        position: 'top-right',
+        isClosable: true,
+        description: <Text>Check your transaction <Link target='_blank' href={`${getScanUrlPrefix(chainId)}/tx/${receipt.transactionHash}`}>here</Link>.</Text>,
+        status: 'success',
+        duration: 5000
+      })
+      // TODO: write to Jom server
+
+    } catch (e) {
+      console.warn(e)
+    }
+
+    // setStage("staked");
   };
 
   const handleKeyUp = (e) => {
@@ -74,21 +198,33 @@ const RegisterChargingStationForm = () => {
   return (
     <div className="flex flex-col items-center justify-center">
       <h3 className="text-center text-3xl text-white font-bold mb-8 ">
-        Register Charging Station
+        Stake Your Station ⛽
       </h3>
       <form className="w-full max-w-sm ">
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">
-            <label
-              className="block text-gray-500 font-bold md:text-left mb-1 md:mb-0 pr-4"
-              htmlFor="inline-full-name"
-            >
-              Station Name
-            </label>
+            <Input
+              color={"white"}
+              id="inline-full-name"
+              type="text"
+              placeholder="Charging Point ID "
+              value={chargingPointId}
+              onChange={(e) => {
+                setChargingPointId(e.target.value);
+              }}
+            />
           </div>
+          {chargingPointId ? (
+            isChargingPointConnected ? <div className="text-green-400">Your station is online.</div>
+              : <div className="text-red-400">Invalid Charging Station ID. This field should be a string from your station manufacturer. Your station might not be connected to our server.</div>
+          )
+            : null
+          }
+        </div>
+        <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">
-            <input
-              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#4caf50]"
+            <Input
+              color={"white"}
               id="inline-full-name"
               type="text"
               placeholder="Station Name"
@@ -104,16 +240,8 @@ const RegisterChargingStationForm = () => {
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">
-            <label
-              className="block text-gray-500 font-bold md:text-left mb-1 md:mb-0 pr-4"
-              htmlFor="inline-longitude"
-            >
-              Longitude
-            </label>
-          </div>
-          <div className="w-full">
-            <input
-              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#4caf50]"
+            <Input
+              color={"white"}
               id="inline-longitude"
               type="number"
               placeholder="Longitude"
@@ -127,16 +255,8 @@ const RegisterChargingStationForm = () => {
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">
-            <label
-              className="block text-gray-500 font-bold md:text-left mb-1 md:mb-0 pr-4"
-              htmlFor="inline-latitude"
-            >
-              Latitude
-            </label>
-          </div>
-          <div className="w-full">
-            <input
-              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#4caf50]"
+            <Input
+              color={"white"}
               id="inline-latitude"
               type="number"
               placeholder="Latitude"
@@ -150,16 +270,8 @@ const RegisterChargingStationForm = () => {
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
           <div className="w-full">
-            <label
-              className="block text-gray-500 font-bold md:text-left mb-1 md:mb-0 pr-4"
-              htmlFor="inline-station-wallet"
-            >
-              Station Wallet
-            </label>
-          </div>
-          <div className="w-full">
-            <input
-              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#4caf50]"
+            <Input
+              color={"white"}
               id="inline-full-name"
               type="text"
               placeholder="Station Wallet"
@@ -174,56 +286,42 @@ const RegisterChargingStationForm = () => {
           )}
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
-          <div className="w-full">
-            <label
-              className="block text-gray-500 font-bold md:text-left mb-1 md:mb-0 pr-4"
-              htmlFor="inline-full-name"
-            >
-              Number of Connectors
-            </label>
-          </div>
           <div className="w-full relative">
-            <input
-              className="relative bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#4caf50]"
+            <Input
+              color={"white"}
               id="inline-full-name"
               type="number"
+              placeholder="Number of Connectors"
               value={numberOfConnectors}
               min="1"
-              onChange={(e) => setNumberOfConnectors(e.target.value)}
+              onChange={(e) => setNumberOfConnectors(parseInt(e.target.value))}
             />
           </div>
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
-          <div className="w-full">
-            <label
-              className="block text-gray-500 font-bold md:text-left mb-1 md:mb-0 pr-4"
-              htmlFor="inline-full-name"
-            >
-              Charge rate
-            </label>
-          </div>
           <div className="w-full relative">
-            <input
-              className="relative bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#4caf50]"
+            <Input
+              color={"white"}
               id="inline-full-name"
               type="number"
+              placeholder="Charging Fee Rate"
               value={chargeRate}
               min="0"
               onKeyUp={(e) => {
                 handleKeyUp(e);
               }}
               onChange={(e) => {
-                setChargeRate(e.target.value);
+                setChargeRate(parseFloat(e.target.value));
               }}
             />
-            <div className="absolute inset-y-0 right-10 flex items-center">
+            <div className="text-gray-500 absolute inset-y-0 right-10 flex items-center">
               <select
                 value={currencySelected}
                 onChange={(e) => setCurrencySelected(e.target.value)}
                 className="outline-none bg-transparent cursor-pointer rounded-lg"
               >
-                <option name="" id="" value="jev">
-                  JEV/10min
+                <option className="text-black" name="" id="" value="jev">
+                  USDT/10min
                 </option>
                 <option name="" id="" value="usd">
                   $/10min
@@ -233,30 +331,23 @@ const RegisterChargingStationForm = () => {
           </div>
         </div>
         <div className="md:flex md:flex-col md:justify-center md:items-start mb-6">
-          <div className="w-full">
-            <label
-              className="block text-gray-500 font-bold md:text-left mb-1 md:mb-0 pr-4"
-              htmlFor="inline-full-name"
-            >
-              Stake Amount
-            </label>
-          </div>
           <div className="w-full relative">
-            <input
+            <Input
               disabled
-              className="cursor-not-allowed bg-gray-500 appearance-none  rounded w-full py-2 px-4 text-white leading-tight"
               id="inline-full-name"
               type="text"
-              value={stakeAmountFetched}
+              placeholder="Stake Amount"
+              value={stakeAmount}
             />
             <div className="text-white absolute inset-y-0 right-10 flex items-center">
-              <div>JEV</div>
+              <div>USDT</div>
             </div>
           </div>
         </div>
+        <ImageUploader />
         <div className="flex items-center justify-center mt-5 flex-col md:items-center md:justify-center">
           <div className="mb-5">
-            <ReCAPTCHA
+            {/* <ReCAPTCHA
               id="recaptcha"
               ref={captchaRef}
               onChange={(e) => {
@@ -268,21 +359,23 @@ const RegisterChargingStationForm = () => {
               size="normal"
               className="g-recaptcha"
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-            />
+            /> */}
           </div>
-          <div className="w-[75%]">
-            <button
+          <div className="flex justify-center w-[75%]">
+            {/* <button
               onClick={() => handleSubmit()}
               className="w-full shadow bg-[#4caf50] focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded hover:scale-105 transition disabled:cursor-not-allowed disabled:bg-gray-400"
               disabled={recaptchaToken ? false : true}
               type="button"
             >
               Submit
-            </button>
+            </button> */}
+
+            <Button onClick={() => handleSubmit()}>Submit</Button>
           </div>
         </div>
       </form>
-      <ChargingStationRegisterPopUpModel
+      {/* <ChargingStationRegisterPopUpModel
         isSubmit={isSubmit}
         setIsSubmit={setIsSubmit}
         stationName={stationName}
@@ -293,7 +386,7 @@ const RegisterChargingStationForm = () => {
         chargeRate={chargeRate}
         currencySelected={currencySelected}
         stakeAmountFetched={stakeAmountFetched}
-      />
+      /> */}
     </div>
   );
 };

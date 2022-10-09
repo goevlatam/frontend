@@ -1,4 +1,5 @@
 import Head from "next/head";
+import { useEffect } from "react";
 import Dashboard from "../components/Dashboard";
 import Layout from "../components/Layout";
 

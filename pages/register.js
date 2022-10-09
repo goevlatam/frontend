@@ -1,11 +1,14 @@
 import Head from "next/head";
 import React, { useState } from "react";
 import Layout from "../components/Layout";
-import RegisterChargingStationForm from "../components/RegisterChargingStationForm";
-import RegisterProviderForm from "../components/RegisterProviderForm";
+import RegisterChargingStationForm from "../components/Registrations/RegisterChargingStationForm";
+import RegisterProviderForm from "../components/Registrations/RegisterProviderForm";
+import ConnectStationGuide from "../components/Registrations/ConnectStationGuide";
+import RegistrationSuccessful from "../components/Registrations/RegistrationSuccessful";
 
 const Register = () => {
-  const [isProvider, setIsProvider] = useState(false);
+  const [isProvider, setIsProvider] = useState(false);  // TODO: for demo purpose we only allow registratrion of station, not provider
+  const [stage, setStage] = useState("connectStation")  // connectStation, stakeStation, staked
   return (
     <Layout>
       {" "}
@@ -14,11 +17,10 @@ const Register = () => {
           <Head>
             <title>Registration</title>
           </Head>
-          {isProvider ? (
-            <RegisterChargingStationForm />
-          ) : (
-            <RegisterProviderForm />
-          )}
+          {stage == "connectStation" ? <ConnectStationGuide setStage={setStage} />
+          : stage == "stakeStation" ?  <RegisterChargingStationForm setStage={setStage} />
+          : <RegistrationSuccessful />
+          }
         </div>
       </div>
     </Layout>

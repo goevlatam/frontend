@@ -7,7 +7,7 @@ const BookId = ({ bookId }) => {
     <Layout>
       {" "}
       <div>
-        <Booking />
+        <Booking bookId={bookId} />
       </div>
     </Layout>
   );
